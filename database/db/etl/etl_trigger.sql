@@ -29,5 +29,29 @@ begin
 end $$ language plpgsql;
 
 create trigger batch_insert_trigger
-after of insert on etl.batch
+after insert on etl.batch
     for each row execute procedure batch_insert();
+
+create or replace function job_status_update() returns trigger as $$
+begin
+
+	if new.status <> 'completed'
+	then
+
+		raise notice 'Rolling back transactions for Job ID: %.', old.batch_id::text;
+		
+		delete from meetup.payment_raw
+		where batch_id = old.batch_id;
+		
+		delete from amazon.payment_raw
+		where batch_id = old.batch_id;
+		
+	end if;
+
+	return new;
+	
+end$$ language plpgsql;
+
+create trigger job_status_update_trigger
+after update on etl.job
+	for each row execute procedure job_status_update();

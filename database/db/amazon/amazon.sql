@@ -8,16 +8,15 @@ create table amazon.payment_raw
 	batch_id bigint not null,
 	key text not null,
 	datetime text not null,
+	type text not null,
 	status text not null,
 	sender_key text not null,
 	sender_name text not null,
-	description text not null,
+	description text,
 	fee text not null,
 	amount text not null,
 	constraint paymentraw_pk primary key (id),
-	constraint paymentraw_batchid_fk foreign key (batch_id) references etl.batch (id) on delete cascade,
-	constraint paymentraw_key_unq unique (key),
-	constraint paymentraw_status_ck check (status in ('failed', 'success'))
+	constraint paymentraw_batchid_fk foreign key (batch_id) references etl.batch (id) on delete cascade
 );
 
 comment on table amazon.payment_raw is
