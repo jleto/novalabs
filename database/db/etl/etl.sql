@@ -10,6 +10,8 @@ create table etl.provider (
 	constraint provider_key_unq unique (key)
 );
 
+create index provider_name_idx on etl.provider (name);
+
 comment on table etl.provider is
 'Provider of the data product.';
 
@@ -28,6 +30,8 @@ create table etl.product (
 
 create index product_providerid_idx on etl.product (provider_id);
 
+create index product_name_idx on etl.product (name);
+
 comment on table etl.product is
 'Data products to be consumed.';
 
@@ -41,6 +45,8 @@ create table etl.batch (
 	constraint batch_keyproductid_unq unique (key, product_id),
 	constraint batch_productid_fk foreign key (product_id) references etl.product (id)
 );
+
+create index batch_productid_idx on etl.batch (product_id);
 
 comment on table etl.batch is
 'Batches for data processing jobs.';
@@ -59,6 +65,11 @@ create table etl.job
 	constraint job_parentid_fk foreign key (parent_id) references etl.job (id)
 );
 
+create index job_parentid_idx on etl.job (parent_id);
+
+create index job_status_idx on etl.job (status);
+
+create index job_batchid_idx on etl.job (batch_id);
+
 comment on table etl.job is
 'To manage the processing of ETL jobs. Jobs are batched and generated according to product schedule.';
-
