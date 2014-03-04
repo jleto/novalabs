@@ -161,3 +161,62 @@ begin
 	end;
 	
 end $$ language plpgsql;
+
+create or replace function etl.fn_squareup_payment_importcsv(lJobId bigint, strCSVFilePath text)
+returns integer as $$
+declare strBatchDate text;
+        lBatchId bigint;
+begin
+
+	begin
+		/* Prevent data from getting loaded twice. */
+	    if (select status from etl.job where id = lJobId) = 'completed'
+	    then
+			return -2;
+		end if;
+		
+		/* pull date from batch table. */
+		select batch.key, batch_id into strBatchDate, lBatchId
+		from etl.job
+		inner join etl.batch
+		on job.batch_id = batch.id
+		where job.id = lJobId;
+
+		/* create temp table for data import from csv file. */
+		drop table if exists squareup_payment_csv;		
+		create temp table squareup_payment_csv (key text, datetime text, description text, amount text, fee text);
+
+		/* Import data from csv file on disk to temp table */
+		execute E'COPY squareup_payment_csv from ''' || strCSVFilePath || ''' DELIMITER '','' CSV header;';
+     
+		/* insert data from temp table to permanent raw table. */
+		insert into squareup.payment_raw (batch_id, key, datetime, description, amount, fee)
+		select lBatchId::bigint, key, datetime, case when description = '' then null else description end, amount, fee
+		from squareup_payment_csv;
+
+		/* update job status to completed. */
+		update etl.job
+		set status = 'completed'
+		where id = lJobId;
+
+		/* Return value indicating success. */
+		return 0;
+		
+	exception when others then 
+
+		raise notice 'The transaction is in an uncommittable state. '
+					 'Transaction was rolled back';
+ 
+		raise notice 'Square Up Payment Import Error: % %', SQLERRM, SQLSTATE;
+
+		/* update job status with error. */
+		update etl.job
+		set status = 'error'
+		where id = lJobId;
+
+		/* Return vaue indicating error. */
+		return -1;
+		
+	end;
+	
+end $$ language plpgsql;

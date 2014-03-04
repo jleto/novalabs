@@ -1,4 +1,4 @@
-﻿create or replace function batch_insert() returns trigger as $$
+﻿create or replace function etl.batch_insert() returns trigger as $$
 declare job_id bigint = null;
 		max_batch_key text;
 begin
@@ -17,10 +17,8 @@ begin
 
 	if job_id is not null
 	then
-		raise notice 'not null: %', job_id;
 		insert into etl.job (parent_id, batch_id) values (job_id, new.id);           
 	else
-		raise notice 'null: %', job_id;
 		insert into etl.job (batch_id) values (new.id);
 	end if;
 
@@ -32,7 +30,7 @@ create trigger batch_insert_trigger
 after insert on etl.batch
     for each row execute procedure batch_insert();
 
-create or replace function job_status_update() returns trigger as $$
+create or replace function etl.job_status_update() returns trigger as $$
 begin
 
 	if new.status <> 'completed'
@@ -44,6 +42,9 @@ begin
 		where batch_id = old.batch_id;
 		
 		delete from amazon.payment_raw
+		where batch_id = old.batch_id;
+		
+		delete from squareup.payment_raw
 		where batch_id = old.batch_id;
 		
 	end if;
