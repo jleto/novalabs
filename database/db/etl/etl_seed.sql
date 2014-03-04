@@ -1,6 +1,7 @@
 ﻿/* Providers */
 insert into etl.provider (key, name) values ('amazon', 'Amazon');
 insert into etl.provider (key, name) values ('meetup', 'Meetup');
+insert into etl.provider (key, name) values ('squareup', 'Square Up');
 
 /* Products */
 insert into etl.product (key, name, provider_id, frequency)
