@@ -8,3 +8,6 @@ values ('amazon_payments', 'Flexible Payment Service', (select id from etl.provi
 
 insert into etl.product (key, name, provider_id, frequency)
 values ('meetup_payments', 'Meetup Payments', (select id from etl.provider where key = 'meetup'), 'daily');
+
+insert into etl.product (key, name, provider_id, frequency)
+values ('squareup_payments', 'Square Up Payments', (select id from etl.provider where key = 'squareup'), 'daily');
